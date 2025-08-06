@@ -1,0 +1,2 @@
+# SNFit
+Supernova Lightcurve Fitting
