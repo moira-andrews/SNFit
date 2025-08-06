@@ -11,4 +11,6 @@ dependencies = [
     "plotly",
     "matplotlib",
     "pandas",
+    "os",
+    "glob"
 ]

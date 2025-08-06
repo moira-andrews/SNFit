@@ -4,7 +4,12 @@ import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from dash import Dash, html, dcc, Input, Output
 import plotly.express as px
+import os
+import glob
 
+data_dir = os.path.join(os.path.dirname(__file__), "data_dir/")
+test_files = glob.glob(data_dir + '*')
+print(test_files)
 
 df = pd.read_csv("https://raw.githubusercontent.com/moira-andrews/codeastro_project/refs/heads/main/bolometric_11fe.txt", header=0, sep='\s+')
 df = df[['Phase', 'L']]
