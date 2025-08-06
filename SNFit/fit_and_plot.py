@@ -10,6 +10,17 @@ df = pd.read_csv("https://raw.githubusercontent.com/moira-andrews/codeastro_proj
 df = df[['Phase', 'L']]
 
 def fitting_function(time,L,order):
+    """_Fitting Supernova Lightcurves_
+        Fits supernova lightcurves using polynomials of up to 20th degree.
+
+    Args:
+        time (array): Gives the days of observation, usually as mean Julian dates. Units can be days or phase with respect to the time of peak brightness.
+        L (array): Can accepts bolometric magnitudes in mag or ergs per second.
+        order (Int): Specifies the degree of the fitting polynomial
+
+    Returns:
+        array: Fitted light curve parameters
+    """
     coeffs = np.polyfit(time,L,order)
     p = np.poly1d(coeffs)
     fit_data = p(time)
