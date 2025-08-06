@@ -10,7 +10,5 @@ dependencies = [
     "dash",
     "plotly",
     "matplotlib",
-    "pandas",
-    "os",
-    "glob"
+    "pandas"
 ]
