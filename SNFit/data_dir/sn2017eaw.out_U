@@ -1,6 +1,3 @@
-SN: sn2017eaw
-Filter: U
-Npoints:           16
 MJD       Mag    DMag  magsys  Telescope  Detector   Source
     57887.97000    12.620     0.040  Landolt            T60             --                      Tsvektkov+18: arXiv:1801.00340
     57891.91000    12.530     0.060  Landolt            M70             --                      Tsvektkov+18: arXiv:1801.00340
