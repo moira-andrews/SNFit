@@ -1,6 +1,8 @@
 # SNFit
 Supernova Lightcurve Fitting: Takes a supernova light curve and fits a polynomial of up to 20th degree.
 
+![SNLogo](https://raw.githubusercontent.com/moira-andrews/SNFit/refs/heads/main/snfit_logo.jpeg)
+
 The input file should be in CSV format with the following columns:
 - `time / Phase`: Time in days or phase of the supernova (days since explosion).
 - `magnitude / Luminosity / Bolometric Luminosity`: Magnitude/Luminosity/Bolometric luminosity of the supernova.

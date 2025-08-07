@@ -26,7 +26,7 @@ app.layout = html.Div(children=[
     html.Div([
         html.Div([
             html.Img(
-                src='https://raw.githubusercontent.com/plotly/dash-sample-apps/main/apps/dash-astronomy/supernova.png',  # Reemplaza con tu URL
+                src='https://raw.githubusercontent.com/moira-andrews/SNFit/refs/heads/main/snfit_logo.jpeg',  # Reemplaza con tu URL
                 style={'height': '60px', 'margin-right': '15px'}
             ),
             html.H1(
