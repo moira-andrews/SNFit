@@ -10,14 +10,16 @@ project = 'SNFit'
 copyright = '2025, Moira Andrews, Kene Anumba, Steve Jurado'
 author = 'Moira Andrews, Kene Anumba, Steve Jurado'
 root_doc = 'index'
-release = 'v0.1.0'
+
+release = 'v1.0.3'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-extensions = ['sphinx.ext.autodoc', 
-              'sphinx.ext.napoleon'
-              ]
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon'
+]
 
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']

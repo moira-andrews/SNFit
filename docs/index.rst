@@ -1,5 +1,5 @@
 .. SNFit documentation master file, created by
-   sphinx-quickstart on Wed Aug  6 12:35:25 2025.
+   sphinx-quickstart on Thu Aug  7 17:02:56 2025.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
@@ -19,4 +19,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
