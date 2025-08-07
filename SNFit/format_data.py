@@ -71,8 +71,6 @@ class LightCurve:
         if time_col and value_col:
             df = df[[df.columns[cols.index(time_col)], df.columns[cols.index(value_col)]]]
 
-            return df
-        
         return df
 
 

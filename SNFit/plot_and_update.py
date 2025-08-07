@@ -87,15 +87,20 @@ def update_figure(file, order):
 
     time_col = next((c for c in df.columns if c.lower() in LightCurve.time_colnames), df.columns[0])
     value_col = next((c for c in df.columns if c.lower() in LightCurve.value_colnames), df.columns[1])
-    fit_data = fitting_function(df[time_col], df[value_col], order)
+    
+    offset = 0
+    if time_col.lower() == 'mjd':
+        offset = min(df[time_col])
+    fit_data = fitting_function(df[time_col] - offset, df[value_col], order)
 
-    fig.add_trace(go.Scatter(x=df[time_col], y=df[value_col], mode='markers'))
-    fig.add_trace(go.Scatter(x=df[time_col], y=fit_data, mode='lines'))
+    fig.add_trace(go.Scatter(x=df[time_col] - offset, y=df[value_col], mode='markers'))
+    fig.add_trace(go.Scatter(x=df[time_col] - offset, y=fit_data, mode='lines'))
 
     fig.update_layout(title='Supernova Lightcurve Fitting',
-                     xaxis_title=f'{time_col} [days]',
+                     xaxis_title=f'{time_col} - {offset} [days]',
                      yaxis_title=f'{value_col}',
                      showlegend=False)
+    
     if value_col == 'Mag':
         fig.update_yaxes(autorange="reversed")
         
