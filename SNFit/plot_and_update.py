@@ -106,10 +106,9 @@ def update_figure(file, order):
         
     return f"Loaded file: {file}", fig
 
-if __name__ == '__main__':
+def open_browser():
+    webbrowser.open_new("http://127.0.0.1:8050/")
 
-    def open_browser():
-        webbrowser.open_new("http://127.0.0.1:8050/")
+def run_plot():
     Timer(1, open_browser).start()
-
     app.run()
