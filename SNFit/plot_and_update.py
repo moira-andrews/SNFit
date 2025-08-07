@@ -1,40 +1,11 @@
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 from dash import Dash, html, dcc, Input, Output
 import plotly.express as px
-import os
-import glob
-
 import webbrowser
 from threading import Timer
-
-
-data_dir = os.path.join(os.path.dirname(__file__), "data_dir/")
-test_files = glob.glob(data_dir + '*')
-print(test_files)
-
-df = pd.read_csv("https://raw.githubusercontent.com/moira-andrews/codeastro_project/refs/heads/main/bolometric_11fe.txt", header=0, sep='\s+')
-df = df[['Phase', 'L']]
-
-def fitting_function(time,L,order):
-    """_Fitting Supernova Lightcurves_
-        Fits supernova lightcurves using polynomials of up to 20th degree.
-
-    Args:
-        time (array): Gives the days of observation, usually as mean Julian dates. Units can be days or phase with respect to the time of peak brightness.
-        L (array): Can accepts bolometric magnitudes in mag or ergs per second.
-        order (Int): Specifies the degree of the fitting polynomial
-
-    Returns:
-        array: Fitted light curve parameters
-    """
-    coeffs = np.polyfit(time,L,order)
-    p = np.poly1d(coeffs)
-    fit_data = p(time)
-    return fit_data
-
+from SNFit.format_data import *
 
 app = Dash()
 
@@ -48,9 +19,10 @@ header_style = {
     'margin-bottom': '2rem'
 }
 
+file_dict = file_formatting()
 
 app.layout = html.Div(children=[
-        # Header moderno con imagen
+    # Header moderno con imagen
     html.Div([
         html.Div([
             html.Img(
@@ -70,7 +42,7 @@ app.layout = html.Div(children=[
             children=html.Button('Upload CSV File', style={'padding': '10px 20px', 'font-size': '16px'}),
             multiple=False,
         )
-    ])
+    ]),
 
     html.Div([
         dcc.Slider(
@@ -79,8 +51,22 @@ app.layout = html.Div(children=[
         max=20,
         step=1,
         value=3,
+        marks=None,
+        tooltip={
+            "always_visible": True,
+            "template": "{value}"
+        },
         ),
     ], style={'width': '50%', 'padding': '20px'}),
+    
+    html.Div([
+        dcc.Dropdown(options=[{'label': k, 'value': v} for k, v in file_dict.items()],
+            value=file_dict['SN 2011fe'],
+            id='dropdown-options'
+            ),
+        
+        html.Div(id='dd-output-container')
+        ], style={'width': '50%', 'padding': '20px'}),
         
 
     dcc.Graph(
@@ -89,22 +75,31 @@ app.layout = html.Div(children=[
 ]) 
 
 @app.callback(
+    Output('dd-output-container', 'children'),
     Output('example-graph', 'figure'),
+    Input('dropdown-options', 'value'),
     Input('variable-slider', 'value')
 )
-def update_graph(order):
+def update_figure(file, order):
+    lc = LightCurve(file)
+    df = lc.df
     fig = go.Figure()
-    fit_data = fitting_function(df['Phase'],df['L'],order)
 
-    fig.add_trace(go.Scatter(x=df['Phase'], y=df['L'], mode='markers'))
-    fig.add_trace(go.Scatter(x=df['Phase'], y=fit_data, mode='lines'))
+    time_col = next((c for c in df.columns if c.lower() in LightCurve.time_colnames), df.columns[0])
+    value_col = next((c for c in df.columns if c.lower() in LightCurve.value_colnames), df.columns[1])
+    fit_data = fitting_function(df[time_col], df[value_col], order)
+
+    fig.add_trace(go.Scatter(x=df[time_col], y=df[value_col], mode='markers'))
+    fig.add_trace(go.Scatter(x=df[time_col], y=fit_data, mode='lines'))
 
     fig.update_layout(title='Supernova Lightcurve Fitting',
-                      xaxis_title='Phase [days]',
-                      yaxis_title='Luminosity [erg/s]',
-                      showlegend=False)
-
-    return fig
+                     xaxis_title=f'{time_col} [days]',
+                     yaxis_title=f'{value_col}',
+                     showlegend=False)
+    if value_col == 'Mag':
+        fig.update_yaxes(autorange="reversed")
+        
+    return f"Loaded file: {file}", fig
 
 if __name__ == '__main__':
 
@@ -112,4 +107,4 @@ if __name__ == '__main__':
         webbrowser.open_new("http://127.0.0.1:8050/")
     Timer(1, open_browser).start()
 
-    app.run(debug=True, use_reloader=False)  # Turn off reloader if inside Jupyter
+    app.run()
