@@ -320,6 +320,7 @@ def run_plot():
     Returns:
         None
     """
+    main()
     Timer(1, open_browser).start()
     app.run()
 
