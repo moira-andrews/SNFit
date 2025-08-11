@@ -1,7 +1,7 @@
 SNFit documentation
 ===================
 
-Fitting supernova light curves.
+Interactive fitting of supernova lightcurves.
 
 .. toctree::
    :maxdepth: 2
