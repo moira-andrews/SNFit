@@ -11,7 +11,7 @@ copyright = '2025, Moira Andrews, Kene Anumba, Steve Jurado'
 author = 'Moira Andrews, Kene Anumba, Steve Jurado'
 root_doc = 'index'
 
-release = 'v1.0.3'
+release = 'v1.1.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

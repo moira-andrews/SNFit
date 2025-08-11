@@ -1,6 +1,6 @@
 import os
 
-__version__ = "1.0.3"
+__version__ = "1.1.0"
 
 # set Python env variable to keep track of example data dir
 SNFit_dir = os.path.dirname(__file__)
