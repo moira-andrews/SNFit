@@ -5,6 +5,19 @@
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+import os
+import sys
+from sphinx.ext import apidoc
+
+sys.path.insert(0, os.path.abspath('..'))
+
+def run_apidoc(_):
+    from sphinx.ext.apidoc import main
+    main(['-o', '.', '../SNFit'])
+
+def setup(app):
+    app.connect('builder-inited', run_apidoc)
+
 
 project = 'SNFit'
 copyright = '2025, Moira Andrews, Kene Anumba, Steve Jurado'
