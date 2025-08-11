@@ -1,4 +1,4 @@
-sphinx
-sphinx-rtd-theme
-
--e ..
+nbsphinx
+pandoc
+ipykernel
+sphinx_rtd_theme
