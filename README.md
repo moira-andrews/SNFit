@@ -14,6 +14,19 @@ The input file should be in CSV format with the following columns:
 
 # Test
 There are other files in the repository inside the test folder which the user can use to test how the visualization and fitting works.
-The test files are located in the `SNFit/SNFit/test/` directory. For example the type II Supernovae [SN 2017eaw](https://www.wis-tns.org/search?name=sn2017eaw&include_frb=1)
+The test files are located in the `SNFit/SNFit/data_dir/` directory. For example the type II Supernovae [SN 2017eaw](https://www.wis-tns.org/search?name=sn2017eaw&include_frb=1) and a bolometric lightcurve of SN 2011fe.
 
-s
+# Instructions
+Install the module
+
+```
+pip install SNFit
+```
+
+Open a python file or in a terminal import the module
+
+```
+python
+from SNFit.plot import run_plot
+run_plot()
+```
