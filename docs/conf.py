@@ -10,6 +10,13 @@ import sys
 from sphinx.ext import apidoc
 
 sys.path.insert(0, os.path.abspath('..'))
+import SNFit
+
+version = SNFit.__version__
+release = version
+
+
+sys.path.insert(0, os.path.abspath('..'))
 
 def run_apidoc(_):
     from sphinx.ext.apidoc import main
@@ -23,8 +30,6 @@ project = 'SNFit'
 copyright = '2025, Moira Andrews, Kene Anumba, Steve Jurado'
 author = 'Moira Andrews, Kene Anumba, Steve Jurado'
 root_doc = 'index'
-
-release = 'v1.1.0'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

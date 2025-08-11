@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "SNFit"
-version = "1.1.0"
+dynamic = ["version"]
 
 dependencies = [
     "numpy",
@@ -13,3 +13,6 @@ dependencies = [
     "matplotlib",
     "pandas"
 ]
+
+[tool.setuptools.dynamic]
+version = {attr = "SNFit.__version__"}
