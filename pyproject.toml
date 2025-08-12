@@ -11,7 +11,8 @@ dependencies = [
     "dash",
     "plotly",
     "matplotlib",
-    "pandas"
+    "pandas",
+    "pytest",
 ]
 
 [tool.setuptools.dynamic]
