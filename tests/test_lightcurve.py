@@ -18,7 +18,8 @@ def test_delim_lightcurve_object():
     '''
     test_file = os.path.join(os.path.dirname(__file__), "test_files/different_delim_test.txt")
     lc = LightCurve(test_file)
-    assert not lc.df.empty
+    assert not lc.df.empty #df is made
+    assert len(lc.df)==30 #no rows are lost
 
 if __name__=="__main__":
     test_nan_lightcurve_object()
