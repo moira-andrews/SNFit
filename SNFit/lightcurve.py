@@ -3,7 +3,7 @@ import pandas as pd
 class LightCurve:
     """
     Loads and formats a supernova lightcurve file into a pandas DataFrame for plotting,
-    including detection of associated error columns.
+    including detection of associated error columns for multiple brightness columns.
     """
     time_colnames = ['phase', 'mjd', 'time', 'date']
     value_colnames = ['l', 'mag', 'luminosity', 'f', 'flux']
@@ -16,22 +16,22 @@ class LightCurve:
             self.df = pd.DataFrame()
 
         self.time_col = self._find_column(self.df.columns, self.time_colnames)
-        self.value_col = self._find_column(self.df.columns, self.value_colnames)
+        self.value_cols = self._find_all_columns(self.df.columns, self.value_colnames)
 
-        self.error_col = self._find_error_column(self.value_col)
-        self.errors = self.df[self.error_col] if self.error_col else None
+        self.error_cols = {
+            val_col: self._find_error_column(val_col)
+            for val_col in self.value_cols
+        }
 
     def _load_and_format(self, file):
         """
-        Load a file and format it to only include the time and value columns.
-
-        Tries standard CSV first, then falls back to regex delimiter parsing.
+        Load the full file with all columns intact.
 
         Args:
-            file (str): Path to the file to open.
+            file (str): Path to the file.
 
         Returns:
-            pandas.DataFrame: DataFrame with only the time and value columns.
+            pd.DataFrame: Loaded DataFrame.
         """
         try:
             df = pd.read_csv(file)
@@ -39,7 +39,7 @@ class LightCurve:
                 raise ValueError("Only one column detected, likely wrong delim")
         except Exception:
             try:
-                df = pd.read_csv(file, delim_whitespace=True)
+                df = pd.read_csv(file, sep='\s+')
                 if df.shape[1] == 1:
                     raise ValueError("Only one column detected with whitespace delim")
             except Exception:
@@ -48,17 +48,7 @@ class LightCurve:
                 except Exception as e:
                     raise RuntimeError(f"Failed to parse file '{file}': {e}")
 
-        cols = [c.lower() for c in df.columns]
-
-        time_col = next((c for c in cols if c in self.time_colnames), df.columns[0])
-        value_col = next((c for c in cols if c in self.value_colnames), df.columns[1])
-
-        if time_col and value_col:
-            df = df[[df.columns[cols.index(time_col)], df.columns[cols.index(value_col)]]]
-
-        df = df.dropna(subset=[df.columns[0], df.columns[1]])
-
-        return df
+        return df.dropna()
 
     def _find_column(self, columns, target_names):
         cols_lower = [c.lower() for c in columns]
@@ -67,7 +57,24 @@ class LightCurve:
                 return columns[cols_lower.index(target)]
         return None
 
+    def _find_all_columns(self, columns, target_names):
+        cols_lower = [c.lower() for c in columns]
+        found = []
+        for target in target_names:
+            found += [columns[i] for i, c in enumerate(cols_lower) if c == target]
+        return found
+
     def _find_error_column(self, value_col):
+        """
+        Find an error column related to a given brightness column by checking common
+        suffixes and prefixes.
+
+        Args:
+            value_col (str): Name of the brightness column.
+
+        Returns:
+            str or None: Corresponding error column name or None if not found.
+        """
         if value_col is None or self.df.empty:
             return None
 
@@ -83,3 +90,15 @@ class LightCurve:
             if cand_lower in cols_lower:
                 return self.df.columns[cols_lower.index(cand_lower)]
         return None
+
+    def get_error_column(self, brightness_col):
+        """
+        Public method to get the error column corresponding to a brightness column.
+
+        Args:
+            brightness_col (str): Name of brightness column.
+
+        Returns:
+            str or None: Name of error column or None if not found.
+        """
+        return self.error_cols.get(brightness_col, None)
