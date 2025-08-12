@@ -25,7 +25,7 @@ def test_multicol_with_error():
     """
     Make LightCurve object with multiple_columns_test.txt file in test directory.
     DF should keep all columns, detect all brightness columns,
-    and detect error columns for Mag, but not Flux, since flux error is titled dF.
+    and detect error columns for Mag and Flux, even though flux error is dF.
     """
     test_file = os.path.join(os.path.dirname(__file__), "test_files/multiple_columns_test.txt")
     lc = LightCurve(test_file)
@@ -34,7 +34,7 @@ def test_multicol_with_error():
     flux_error_col = lc.error_cols.get('Flux')
 
     assert mag_error_col is not None, "Mag should have an error column"
-    assert flux_error_col is None, "Flux shoudln't have an error column from dF"
+    assert flux_error_col is not None, "Flux shoudln't have an error column from dF"
 
     other_errors = {k: v for k, v in lc.error_cols.items() if k not in ['Mag', 'Flux'] and v is not None}
     assert not other_errors, f"Unexpected error columns detected: {other_errors}"

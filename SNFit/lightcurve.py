@@ -1,4 +1,5 @@
 import pandas as pd
+from SNFit.load_file import load_and_format
 
 class LightCurve:
     """
@@ -8,12 +9,17 @@ class LightCurve:
     time_colnames = ['phase', 'mjd', 'time', 'date']
     value_colnames = ['l', 'mag', 'luminosity', 'f', 'flux']
 
-    def __init__(self, filepath):
+    def __init__(self, filepath, upload_df=None):
         self.filepath = filepath
-        try:
-            self.df = self._load_and_format(filepath)
-        except Exception:
-            self.df = pd.DataFrame()
+        
+        if upload_df is not None:
+            self.df = upload_df
+        else:
+            try:
+                self.df = load_and_format(filepath=filepath)
+            except Exception as e:
+                print(e)
+                self.df = pd.DataFrame()
 
         self.time_col = self._find_column(self.df.columns, self.time_colnames)
         self.value_cols = self._find_all_columns(self.df.columns, self.value_colnames)
@@ -22,33 +28,6 @@ class LightCurve:
             val_col: self._find_error_column(val_col)
             for val_col in self.value_cols
         }
-
-    def _load_and_format(self, file):
-        """
-        Load the full file with all columns intact.
-
-        Args:
-            file (str): Path to the file.
-
-        Returns:
-            pd.DataFrame: Loaded DataFrame.
-        """
-        try:
-            df = pd.read_csv(file)
-            if df.shape[1] == 1:
-                raise ValueError("Only one column detected, likely wrong delim")
-        except Exception:
-            try:
-                df = pd.read_csv(file, sep='\s+')
-                if df.shape[1] == 1:
-                    raise ValueError("Only one column detected with whitespace delim")
-            except Exception:
-                try:
-                    df = pd.read_csv(file, sep=r'[,\s;|]+', engine='python')
-                except Exception as e:
-                    raise RuntimeError(f"Failed to parse file '{file}': {e}")
-
-        return df.dropna()
 
     def _find_column(self, columns, target_names):
         cols_lower = [c.lower() for c in columns]
@@ -65,30 +44,45 @@ class LightCurve:
         return found
 
     def _find_error_column(self, value_col):
-        """
-        Find an error column related to a given brightness column by checking common
-        suffixes and prefixes.
-
-        Args:
-            value_col (str): Name of the brightness column.
-
-        Returns:
-            str or None: Corresponding error column name or None if not found.
-        """
+        
         if value_col is None or self.df.empty:
             return None
+
+        value_lower = value_col.lower()
+        abbreviations = {
+            'flux': ['f'],
+            'magnitude': ['mag'],
+            'mag': [],
+            'luminosity': ['l']
+        }
 
         suffixes = ['err', 'error', '_err', '_error']
         prefixes = ['d', 'derr', 'd_err']
 
-        candidates = [value_col + suf for suf in suffixes] + [pre + value_col for pre in prefixes]
-
         cols_lower = [c.lower() for c in self.df.columns]
+        cols_original = list(self.df.columns)
 
-        for candidate in candidates:
-            cand_lower = candidate.lower()
-            if cand_lower in cols_lower:
-                return self.df.columns[cols_lower.index(cand_lower)]
+        def find_col(name_lower):
+            if name_lower in cols_lower:
+                return cols_original[cols_lower.index(name_lower)]
+            return None
+
+        for suf in suffixes:
+            col = find_col(value_lower + suf)
+            if col:
+                return col
+
+        for pre in prefixes:
+            col = find_col(pre + value_lower)
+            if col:
+                return col
+
+        for abbr in abbreviations.get(value_lower, []):
+            for pre in prefixes:
+                col = find_col(pre + abbr)
+                if col:
+                    return col
+
         return None
 
     def get_error_column(self, brightness_col):

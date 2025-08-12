@@ -5,7 +5,7 @@ from dash import Dash, html, dcc, Input, Output, State
 from dash import dash_table
 import webbrowser
 from threading import Timer
-from SNFit.load_file import load_dir
+from SNFit.load_file import load_dir, load_and_format
 from SNFit.lightcurve import LightCurve
 from SNFit.lc_analysis import fitting_function
 import base64
@@ -122,36 +122,6 @@ def main():
             ], style={'flex': '1', 'padding': '20px', 'minWidth': '300px'}),
         ], style={'display': 'flex', 'flexDirection': 'row', 'alignItems': 'flex-start', 'width': '100%'})
     ])
-            
-
-def parse_contents(contents, filename):
-    """
-    Parse uploaded file contents into a pandas DataFrame.
-
-    Args:
-        contents (str): The base64-encoded file contents from the upload component.
-        filename (str): The name of the uploaded file.
-
-    Returns:
-        pd.DataFrame: The parsed data as a DataFrame.
-
-    Raises:
-        ValueError: If the file type is not supported.
-    """
-    content_type, content_string = contents.split(',')
-    decoded = base64.b64decode(content_string)
-    if filename.lower().endswith('.csv'):
-        df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-    elif filename.lower().endswith('.txt'):
-        # Try whitespace or tab delimited
-        try:
-            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')), delim_whitespace=True)
-        except Exception:
-            df = pd.read_csv(io.StringIO(decoded.decode('utf-8')))
-    else:
-        raise ValueError(f"Unsupported file type: {filename}")
-    return df
-
 
 @app.callback(
     Output('dropdown-options', 'options'),
@@ -205,7 +175,7 @@ def update_column_dropdowns(selected_file, upload_contents, upload_filename):
         tuple: (time_col_options, time_col_value, value_col_options, value_col_value)
     """
     if upload_contents and upload_filename and selected_file == upload_filename:
-        df = parse_contents(upload_contents, upload_filename)
+        df = load_and_format(contents=upload_contents, upload_filename=upload_filename)
     else:
         lc = LightCurve(selected_file)
         df = lc.df
@@ -255,8 +225,8 @@ def update_figure(file, time_col, value_col, order, phase_min, phase_max, upload
         tuple: (plotly Figure, fit results Div, file label Div)
     """
     if upload_contents and upload_filename and file == upload_filename:
-        df = parse_contents(upload_contents, upload_filename)
-        lc = LightCurve.__new__(LightCurve)
+        df = load_and_format(contents=upload_contents, upload_filename=upload_filename)
+        lc = LightCurve(upload_filename,upload_df=df)
         lc.df = df
         file_label = f"Loaded uploaded file: {upload_filename}"
     else:
@@ -287,7 +257,26 @@ def update_figure(file, time_col, value_col, order, phase_min, phase_max, upload
     value_fit = df[value_col][mask]
     fit_data, coeffs = fitting_function(phase_fit, value_fit, order)
 
-    fig.add_trace(go.Scatter(x=phase, y=df[value_col], mode='markers'))
+    error_col = lc.get_error_column(value_col)
+    if error_col and error_col in df.columns:
+        fig.add_trace(go.Scatter(
+            x=phase,
+            y=df[value_col],
+            mode='markers',
+            error_y=dict(
+                type='data',
+                array=df[error_col],
+                visible=True
+            )
+        ))
+    else:
+        fig.add_trace(go.Scatter(
+            x=phase,
+            y=df[value_col],
+            mode='markers'
+        ))
+
+    fig.add_trace(go.Scatter(x=phase_fit, y=fit_data, mode='lines'))
     fig.add_trace(go.Scatter(x=phase_fit, y=fit_data, mode='lines'))
 
     fig.update_layout(title='Supernova Lightcurve Fitting',
@@ -348,7 +337,7 @@ def update_phase_range(file, time_col, upload_contents, upload_filename):
         tuple: (float, float) Minimum and maximum phase values.
     """
     if upload_contents and upload_filename and file == upload_filename:
-        df = parse_contents(upload_contents, upload_filename)
+        df = load_and_format(contents=upload_contents, upload_filename=upload_filename)
     else:
         lc = LightCurve(file)
         df = lc.df
