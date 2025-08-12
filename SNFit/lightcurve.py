@@ -1,7 +1,3 @@
-
-# load_dir remains as a utility function
-from .load_file import load_dir
-
 import pandas as pd
 
 class LightCurve:
