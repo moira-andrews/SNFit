@@ -22,11 +22,15 @@ Install the module
 ```
 pip install SNFit
 ```
-
-Open a python file or in a terminal import the module
+To run in terminal
 
 ```
-python
+snfit-plot
+```
+
+To import the module or run through a python terminal
+
+```
 from SNFit.plot import run_plot
 run_plot()
 ```
