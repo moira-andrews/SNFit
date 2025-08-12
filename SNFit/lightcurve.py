@@ -1,6 +1,6 @@
 
-# file_formatting remains as a utility function
-from .load_file import file_formatting
+# load_dir remains as a utility function
+from .load_file import load_dir
 
 import pandas as pd
 
