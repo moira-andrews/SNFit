@@ -38,7 +38,7 @@ def fitting_function(time, brightness, order, error=None):
     ss_res = np.sum((brightness - fit_data) ** 2)
     ss_tot = np.sum((brightness - np.mean(brightness)) ** 2)
     r_squared = 1 - ss_res / ss_tot if ss_tot > 0 else np.nan
-
+ 
     if error is not None:
         residuals = brightness - fit_data
         chi2 = np.sum((residuals / error) ** 2)
