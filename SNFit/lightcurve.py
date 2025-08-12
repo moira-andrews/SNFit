@@ -1,7 +1,3 @@
-
-# file_formatting remains as a utility function
-from .load_file import file_formatting
-
 import pandas as pd
 
 class LightCurve:

@@ -5,7 +5,7 @@ from dash import Dash, html, dcc, Input, Output, State
 from dash import dash_table
 import webbrowser
 from threading import Timer
-from SNFit.load_file import file_formatting
+from SNFit.load_file import load_dir
 from SNFit.lightcurve import LightCurve
 from SNFit.lc_analysis import fitting_function
 import base64
@@ -15,7 +15,7 @@ external_stylesheets = [
     "https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css"
 ]
 app = Dash(external_stylesheets=external_stylesheets)
-file_dict = file_formatting()
+file_dict = load_dir()
 
 def main():
     """

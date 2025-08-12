@@ -2,11 +2,10 @@ import os
 import glob
 import pandas as pd
 
-def file_formatting(filepath=None):
+def load_dir(filepath=None):
     """
     Scan the data directory and build a dictionary mapping user-friendly labels to file paths.
-
-    Optionally adds an extra file via the filepath argument.
+    Optionally adds an extra file via the filepath argument. Default is the files included in the data_dir directory.
 
     Args:
         filepath (str, optional): Filepath input of location of file on disk to plot. Defaults to None.
