@@ -1,6 +1,8 @@
 import os
 import glob
 import pandas as pd
+import base64
+import io
 
 def load_dir(filepath=None):
     """
@@ -44,3 +46,55 @@ def load_dir(filepath=None):
         file_dict[label] = file
     return file_dict
 
+def load_and_format(filepath=None, contents=None, upload_filename=None, df=None):
+    """
+    Load or parse data into a pandas DataFrame, handling file paths,
+    uploaded base64 contents, or directly passed DataFrames.
+
+    Tries multiple parsing strategies in order until one works.
+
+    Args:
+        file (str or file-like, optional): Path to a local file or StringIO.
+        contents (str, optional): Base64-encoded uploaded file content.
+        upload_filename (str, optional): Name of the uploaded file (for parsing).
+        df (pd.DataFrame, optional): DataFrame already loaded.
+
+    Returns:
+        pd.DataFrame: Loaded and cleaned DataFrame.
+
+    Raises:
+        ValueError: If unsupported file type or invalid input.
+        RuntimeError: If file parsing fails.
+    """
+
+    if df is not None:
+        return df.dropna()
+
+    if contents is not None and upload_filename is not None:
+        content_type, content_string = contents.split(',')
+        decoded_bytes = base64.b64decode(content_string)
+        decoded_str = decoded_bytes.decode('utf-8')
+        file_like = io.StringIO(decoded_str)
+    elif filepath is not None:
+        file_like = filepath
+    else:
+        raise ValueError("Must provide either 'filepath', or 'contents' and 'upload_filename', or 'df'.")
+
+    parse_attempts = [
+        lambda f: pd.read_csv(f),
+        lambda f: pd.read_csv(f, sep=r'\s+'),
+        lambda f: pd.read_csv(f, sep=r'[,\s;|]+', engine='python'),
+    ]
+
+    for parse_func in parse_attempts:
+        try:
+            if hasattr(file_like, 'seek'):
+                file_like.seek(0)
+            df = parse_func(file_like)
+            if df.shape[1] == 1:
+                continue
+            return df.dropna()
+        except Exception:
+            continue
+
+    raise RuntimeError(f"Failed to parse data with provided inputs.")

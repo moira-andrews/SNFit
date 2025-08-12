@@ -1,10 +1,4 @@
-SNFit package
-=============
-
-Submodules
-----------
-
-SNFit.lc\_analysis module
+SNFit.lc\_analysis
 -------------------------
 
 .. automodule:: SNFit.lc_analysis
@@ -12,7 +6,7 @@ SNFit.lc\_analysis module
    :undoc-members:
    :show-inheritance:
 
-SNFit.lightcurve module
+SNFit.lightcurve
 -----------------------
 
 .. automodule:: SNFit.lightcurve
@@ -20,7 +14,7 @@ SNFit.lightcurve module
    :undoc-members:
    :show-inheritance:
 
-SNFit.load\_file module
+SNFit.load\_file
 -----------------------
 
 .. automodule:: SNFit.load_file
@@ -28,7 +22,7 @@ SNFit.load\_file module
    :undoc-members:
    :show-inheritance:
 
-SNFit.plot module
+SNFit.plot
 -----------------
 
 .. automodule:: SNFit.plot
