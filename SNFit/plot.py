@@ -19,10 +19,10 @@ file_dict = load_dir()
 
 def main():
     """
-    Set up the Dash app layout, including header, upload, slider, dropdown, and graph components.
+    Set up the Dash app layout including headers, upload button, dropdowns, sliders,
+    inputs for phase range, and the graph container.
 
-    Returns:
-        None
+    This initializes all UI components with appropriate styles and default values.
     """
     header_style = {
         'background': 'linear-gradient(135deg, #6e48aa 0%, #9d50bb 100%)',
@@ -133,21 +133,19 @@ def main():
 )
 def update_dropdown_options(upload_contents, upload_filename, options, current_value):
     """
-    Update the dropdown options and value when a new file is uploaded.
+    Update dropdown options and selection to include uploaded files.
 
     Args:
-        upload_contents (str): The base64-encoded contents of the uploaded file.
-        upload_filename (str): The name of the uploaded file.
-        options (list): The current dropdown options.
-        current_value (str): The current selected value in the dropdown.
+        upload_contents (str): Base64-encoded contents of an uploaded file.
+        upload_filename (str): Filename of the uploaded file.
+        options (list): Existing list of dropdown options.
+        current_value (str): Currently selected dropdown value.
 
     Returns:
-        tuple: Updated options list and selected value.
+        tuple: Updated dropdown options list and selected value.
     """
     if upload_contents and upload_filename:
-        # Add uploaded file to dropdown
         new_option = {'label': upload_filename, 'value': upload_filename}
-        # Avoid duplicates
         if new_option not in options:
             options = options + [new_option]
         return options, upload_filename
@@ -164,15 +162,15 @@ def update_dropdown_options(upload_contents, upload_filename, options, current_v
 )
 def update_column_dropdowns(selected_file, upload_contents, upload_filename):
     """
-    Update the time and brightness column dropdowns options and values based on the selected file.
+    Populate time and brightness column dropdowns based on selected file or uploaded data.
 
     Args:
-        selected_file (str): Selected filename or path from the dropdown.
-        upload_contents (str): Base64 encoded contents of uploaded file.
-        upload_filename (str): Name of the uploaded file.
+        selected_file (str): The filename or path currently selected.
+        upload_contents (str): Base64-encoded uploaded file contents.
+        upload_filename (str): Filename of the uploaded file.
 
     Returns:
-        tuple: (time_col_options, time_col_value, value_col_options, value_col_value)
+        tuple: Options and default selected values for time and brightness dropdowns.
     """
     if upload_contents and upload_filename and selected_file == upload_filename:
         df = load_and_format(contents=upload_contents, upload_filename=upload_filename)
@@ -206,23 +204,27 @@ def update_column_dropdowns(selected_file, upload_contents, upload_filename):
     State('upload-data', 'filename'),
     Input('example-graph', 'relayoutData')
 )
-def update_figure(file, time_col, value_col, order, phase_min, phase_max, upload_contents, upload_filename, relayoutData):
+def update_figure(file, time_col, value_col, order, phase_min, phase_max,
+                  upload_contents, upload_filename, relayoutData):
     """
-    Update the plot and label based on the selected file, selected columns, slider value, and uploaded file.
+    Update the lightcurve plot and display fit results based on selected inputs.
 
     Args:
-        file (str): The selected file from the dropdown.
-        time_col (str): Selected time column.
-        value_col (str): Selected brightness/value column.
-        order (int): The polynomial order from the slider.
-        phase_min (float): Minimum phase value for fitting.
-        phase_max (float): Maximum phase value for fitting.
-        upload_contents (str): The base64-encoded contents of the uploaded file.
-        upload_filename (str): The name of the uploaded file.
-        relayoutData (dict): Plotly relayoutData for preserving zoom/pan.
+        file (str): Selected filename.
+        time_col (str): Selected time column name.
+        value_col (str): Selected brightness column name.
+        order (int): Polynomial order for fitting.
+        phase_min (float): Minimum phase to include in fit.
+        phase_max (float): Maximum phase to include in fit.
+        upload_contents (str): Base64-encoded contents of uploaded file.
+        upload_filename (str): Filename of the uploaded file.
+        relayoutData (dict): Plotly relayout data to preserve zoom/pan.
 
     Returns:
-        tuple: (plotly Figure, fit results Div, file label Div)
+        tuple:
+            plotly.graph_objs.Figure: Updated figure with data and fit.
+            html.Div: Div containing the fit coefficients table.
+            html.Div: Label indicating the loaded file.
     """
     if upload_contents and upload_filename and file == upload_filename:
         df = load_and_format(contents=upload_contents, upload_filename=upload_filename)
@@ -255,10 +257,11 @@ def update_figure(file, time_col, value_col, order, phase_min, phase_max, upload
     mask = (phase >= phase_min) & (phase <= phase_max)
     phase_fit = phase[mask]
     value_fit = df[value_col][mask]
-    fit_data, coeffs = fitting_function(phase_fit, value_fit, order)
 
     error_col = lc.get_error_column(value_col)
+    error_fit = None
     if error_col and error_col in df.columns:
+        error_fit = df[error_col][mask]
         fig.add_trace(go.Scatter(
             x=phase,
             y=df[value_col],
@@ -275,8 +278,12 @@ def update_figure(file, time_col, value_col, order, phase_min, phase_max, upload
             y=df[value_col],
             mode='markers'
         ))
+    
+    fit_data, coeffs, chi2, r2 = fitting_function(phase_fit, value_fit, order, error=error_fit)
+    fit_str = f"Fit Results: R^2 = {r2:0.3f}"
+    if chi2 is not None:
+        fit_str = f"Fit Results: R^2 = {r2:0.3f}, reduced Chi^2 of {chi2:0.3f}"
 
-    fig.add_trace(go.Scatter(x=phase_fit, y=fit_data, mode='lines'))
     fig.add_trace(go.Scatter(x=phase_fit, y=fit_data, mode='lines'))
 
     fig.update_layout(title='Supernova Lightcurve Fitting',
@@ -301,7 +308,7 @@ def update_figure(file, time_col, value_col, order, phase_min, phase_max, upload
 
     coeff_data = [{"Order": i, "Coefficient": f"{c:.4g}"} for i, c in enumerate(coeffs[::-1])]
     coeff_table = html.Div([
-        html.H4("Fit Results"),
+        html.H4(fit_str),
         dash_table.DataTable(
             columns=[{"name": "Order", "id": "Order"}, {"name": "Coefficient", "id": "Coefficient"}],
             data=coeff_data,
@@ -325,16 +332,16 @@ def update_figure(file, time_col, value_col, order, phase_min, phase_max, upload
 )
 def update_phase_range(file, time_col, upload_contents, upload_filename):
     """
-    Set the default values for phase-min and phase-max input boxes based on the selected time column.
+    Compute default phase range (min and max) for inputs based on selected time column.
 
     Args:
-        file (str): The selected file from the dropdown.
+        file (str): Selected filename.
         time_col (str): Selected time column.
         upload_contents (str): Base64 encoded contents of uploaded file.
-        upload_filename (str): Name of the uploaded file.
+        upload_filename (str): Filename of the uploaded file.
 
     Returns:
-        tuple: (float, float) Minimum and maximum phase values.
+        tuple: Minimum and maximum phase values as floats.
     """
     if upload_contents and upload_filename and file == upload_filename:
         df = load_and_format(contents=upload_contents, upload_filename=upload_filename)
@@ -354,7 +361,7 @@ def update_phase_range(file, time_col, upload_contents, upload_filename):
 
 def open_browser():
     """
-    Open the default web browser to the Dash app URL.
+    Open the default web browser to the local Dash app address.
 
     Returns:
         None
@@ -363,7 +370,7 @@ def open_browser():
 
 def run_plot():
     """
-    Start the Dash app and open the browser after a short delay.
+    Start the Dash server and open the app in the browser after a short delay.
 
     Returns:
         None
@@ -374,9 +381,6 @@ def run_plot():
 
 if __name__ == "__main__":
     """
-    Entry point for running the Dash app.
-
-    Returns:
-        None
+    Run the Dash app when the module is executed as the main program.
     """
     run_plot()
