@@ -61,6 +61,14 @@ def main():
                     style={'marginTop': '5px','font-family': 'Arial, sans-serif', 'font-size': '16px'}
                 ),
                 html.Div([
+                    html.Label("Select Time Column:"),
+                    dcc.Dropdown(id='time-col-dropdown', clearable=False, style={'marginTop': '10px'}),
+                ]),
+                html.Div([
+                    html.Label("Select Brightness Column:"),
+                    dcc.Dropdown(id='value-col-dropdown', clearable=False, style={'marginTop': '10px'}),
+                ]),
+                html.Div([
                     html.Label("Polynomial Order"),
                     dcc.Slider(
                         id='variable-slider',
@@ -176,10 +184,51 @@ def update_dropdown_options(upload_contents, upload_filename, options, current_v
     return options, current_value
 
 @app.callback(
+    Output('time-col-dropdown', 'options'),
+    Output('time-col-dropdown', 'value'),
+    Output('value-col-dropdown', 'options'),
+    Output('value-col-dropdown', 'value'),
+    Input('dropdown-options', 'value'),
+    Input('upload-data', 'contents'),
+    State('upload-data', 'filename'),
+)
+def update_column_dropdowns(selected_file, upload_contents, upload_filename):
+    """
+    Update the time and brightness column dropdowns options and values based on the selected file.
+
+    Args:
+        selected_file (str): Selected filename or path from the dropdown.
+        upload_contents (str): Base64 encoded contents of uploaded file.
+        upload_filename (str): Name of the uploaded file.
+
+    Returns:
+        tuple: (time_col_options, time_col_value, value_col_options, value_col_value)
+    """
+    if upload_contents and upload_filename and selected_file == upload_filename:
+        df = parse_contents(upload_contents, upload_filename)
+    else:
+        lc = LightCurve(selected_file)
+        df = lc.df
+
+    time_cols = [c for c in df.columns if c.lower() in LightCurve.time_colnames]
+    value_cols = [c for c in df.columns if c.lower() in LightCurve.value_colnames]
+
+    time_options = [{'label': c, 'value': c} for c in time_cols] if time_cols else []
+    value_options = [{'label': c, 'value': c} for c in value_cols] if value_cols else []
+
+    time_val = time_cols[0] if time_cols else None
+    value_val = value_cols[0] if value_cols else None
+
+    return time_options, time_val, value_options, value_val
+
+
+@app.callback(
     Output('example-graph', 'figure'),
     Output('dd-output-container', 'children'),
     Output('file-label', 'children'),
     Input('dropdown-options', 'value'),
+    Input('time-col-dropdown', 'value'),
+    Input('value-col-dropdown', 'value'),
     Input('variable-slider', 'value'),
     Input('phase-min', 'value'),
     Input('phase-max', 'value'),
@@ -187,12 +236,14 @@ def update_dropdown_options(upload_contents, upload_filename, options, current_v
     State('upload-data', 'filename'),
     Input('example-graph', 'relayoutData')
 )
-def update_figure(file, order, phase_min, phase_max, upload_contents, upload_filename, relayoutData):
+def update_figure(file, time_col, value_col, order, phase_min, phase_max, upload_contents, upload_filename, relayoutData):
     """
-    Update the plot and label based on the selected file, slider value, and uploaded file.
+    Update the plot and label based on the selected file, selected columns, slider value, and uploaded file.
 
     Args:
         file (str): The selected file from the dropdown.
+        time_col (str): Selected time column.
+        value_col (str): Selected brightness/value column.
         order (int): The polynomial order from the slider.
         phase_min (float): Minimum phase value for fitting.
         phase_max (float): Maximum phase value for fitting.
@@ -214,14 +265,17 @@ def update_figure(file, order, phase_min, phase_max, upload_contents, upload_fil
 
     df = lc.df
 
+    if time_col not in df.columns or value_col not in df.columns:
+        time_col = next((c for c in df.columns if c.lower() in lc.time_colnames), df.columns[0])
+        value_col = next((c for c in df.columns if c.lower() in lc.value_colnames), df.columns[1])
+
     fig = go.Figure()
 
-    time_col = next((c for c in df.columns if c.lower() in lc.time_colnames), df.columns[0])
-    value_col = next((c for c in df.columns if c.lower() in lc.value_colnames), df.columns[1])
-
     offset = 0
+    xaxis_title = f'{time_col} [days]'
     if time_col.lower() == 'mjd':
         offset = min(df[time_col])
+        xaxis_title = f'{time_col} - {offset} [days]'
 
     phase = df[time_col] - offset
     if phase_min is None:
@@ -237,11 +291,11 @@ def update_figure(file, order, phase_min, phase_max, upload_contents, upload_fil
     fig.add_trace(go.Scatter(x=phase_fit, y=fit_data, mode='lines'))
 
     fig.update_layout(title='Supernova Lightcurve Fitting',
-                     xaxis_title=f'{time_col} - {offset} [days]',
-                     yaxis_title=f'{value_col}',
-                     showlegend=False)
+                      xaxis_title=xaxis_title,
+                      yaxis_title=f'{value_col}',
+                      showlegend=False)
 
-    if value_col == 'Mag':
+    if value_col.lower() == 'mag':
         fig.update_yaxes(autorange="reversed")
 
     if relayoutData is not None:
@@ -272,22 +326,23 @@ def update_figure(file, order, phase_min, phase_max, upload_contents, upload_fil
     ])
     return fig, output_div, file_label
 
-
 @app.callback(
     Output('phase-min', 'value'),
     Output('phase-max', 'value'),
     Input('dropdown-options', 'value'),
+    Input('time-col-dropdown', 'value'),
     Input('upload-data', 'contents'),
     State('upload-data', 'filename')
 )
-def update_phase_range(file, upload_contents, upload_filename):
+def update_phase_range(file, time_col, upload_contents, upload_filename):
     """
-    Set the default values for phase-min and phase-max input boxes based on the selected file.
+    Set the default values for phase-min and phase-max input boxes based on the selected time column.
 
     Args:
         file (str): The selected file from the dropdown.
-        upload_contents (str): The base64-encoded contents of the uploaded file.
-        upload_filename (str): The name of the uploaded file.
+        time_col (str): Selected time column.
+        upload_contents (str): Base64 encoded contents of uploaded file.
+        upload_filename (str): Name of the uploaded file.
 
     Returns:
         tuple: (float, float) Minimum and maximum phase values.
@@ -297,10 +352,14 @@ def update_phase_range(file, upload_contents, upload_filename):
     else:
         lc = LightCurve(file)
         df = lc.df
-    time_col = next((c for c in df.columns if c.lower() in LightCurve.time_colnames), df.columns[0])
+
+    if time_col not in df.columns:
+        time_col = next((c for c in df.columns if c.lower() in LightCurve.time_colnames), df.columns[0])
+
     offset = 0
     if time_col.lower() == 'mjd':
         offset = min(df[time_col])
+
     phase = df[time_col] - offset
     return float(np.min(phase)), float(np.max(phase))
 
@@ -331,5 +390,4 @@ if __name__ == "__main__":
     Returns:
         None
     """
-    main()
     run_plot()

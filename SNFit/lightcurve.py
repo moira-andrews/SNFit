@@ -30,12 +30,35 @@ class LightCurve:
         Returns:
             pandas.DataFrame: DataFrame with only the time and value columns.
         """
-        df = pd.read_csv(file)
-        if df.shape[-1] == 1:
-            df = pd.read_csv(file, header=0, sep='\s+')
+        delimiters = [',', '\t', ';', '|', ' ']
+        errors = []
+
+        for delim in delimiters:
+            try:
+                df = pd.read_csv(file, sep=delim)
+                if df.shape[1] > 1:
+                    break
+            except (pd.errors.ParserError, pd.errors.EmptyDataError, UnicodeDecodeError) as e:
+                errors.append(f"Delimiter '{delim}': {e}")
+                continue
+        else:
+            try:
+                df = pd.read_csv(file, sep='\s+', engine='python')
+            except Exception as e:
+                errors.append(f"Fallback with whitespace failed: {e}")
+                raise RuntimeError(
+                    f"Failed to parse file '{file}' with any delimiter. Errors:\n" +
+                    "\n".join(errors)
+                ) from e
+
         cols = [c.lower() for c in df.columns]
+
         time_col = next((c for c in cols if c in self.time_colnames), df.columns[0])
         value_col = next((c for c in cols if c in self.value_colnames), df.columns[1])
+
         if time_col and value_col:
             df = df[[df.columns[cols.index(time_col)], df.columns[cols.index(value_col)]]]
+
+        df = df.dropna(subset=[df.columns[0], df.columns[1]])
+
         return df
