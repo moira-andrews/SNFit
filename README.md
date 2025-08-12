@@ -28,7 +28,7 @@ To run in terminal
 snfit-plot
 ```
 
-To import the module or run through a python terminal
+To import the module and run through python
 
 ```
 from SNFit.plot import run_plot
