@@ -142,7 +142,10 @@ def update_dropdown_options(upload_contents, upload_filename, options, current_v
         current_value (str): Currently selected dropdown value.
 
     Returns:
-        tuple: Updated dropdown options list and selected value.
+        tuple:
+
+            list: Updated dropdown options list
+            str: Selected value
     """
     if upload_contents and upload_filename:
         new_option = {'label': upload_filename, 'value': upload_filename}
@@ -170,7 +173,15 @@ def update_column_dropdowns(selected_file, upload_contents, upload_filename):
         upload_filename (str): Filename of the uploaded file.
 
     Returns:
-        tuple: Options and default selected values for time and brightness dropdowns.
+        tuple:
+        
+            list: Time axis options
+            
+            str: Currently selected time axis option
+            
+            list: Brightness axis options
+            
+            str: Currently selected brightness axis option
     """
     if upload_contents and upload_filename and selected_file == upload_filename:
         df = load_and_format(contents=upload_contents, upload_filename=upload_filename)
@@ -222,8 +233,11 @@ def update_figure(file, time_col, value_col, order, phase_min, phase_max,
 
     Returns:
         tuple:
+            
             plotly.graph_objs.Figure: Updated figure with data and fit.
+            
             html.Div: Div containing the fit coefficients table.
+            
             html.Div: Label indicating the loaded file.
     """
     if upload_contents and upload_filename and file == upload_filename:
@@ -341,7 +355,11 @@ def update_phase_range(file, time_col, upload_contents, upload_filename):
         upload_filename (str): Filename of the uploaded file.
 
     Returns:
-        tuple: Minimum and maximum phase values as floats.
+        tuple: 
+            
+            float: Minimum phase/time value
+
+            float: Maximum phase/time value
     """
     if upload_contents and upload_filename and file == upload_filename:
         df = load_and_format(contents=upload_contents, upload_filename=upload_filename)
